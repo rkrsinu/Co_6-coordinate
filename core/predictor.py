@@ -21,7 +21,9 @@ def predict(model, model_type, features):
 
     if model_type == "torch":
         with torch.no_grad():
-            return model(torch.tensor(features).float()).numpy()
+            pred = model(torch.tensor(features).float()).numpy()
 
     else:
-        return model.predict(features)
+        pred = model.predict(features)
+
+    return pred
