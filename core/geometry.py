@@ -1,44 +1,53 @@
 import numpy as np
 from itertools import combinations
 
-def get_co_index(elements):
-    for i, e in enumerate(elements):
-        if e.upper() == "CO":
-            return i
-    raise ValueError("Co not found")
+def calculate_angle(a, b, c):
+    ba = a - b
+    bc = c - b
+    cosang = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    return np.degrees(np.arccos(np.clip(cosang, -1, 1)))
 
-def get_6_neighbors(elements, coords, co_idx):
+
+def ideal_geometry_deviation(angles):
+    ideal = [90, 180]
+    dev = [min(abs(a - i) for i in ideal) for a in angles]
+    return float(np.mean(dev))
+
+
+def get_octahedral_neighbors(elements, coords):
+
+    co_idx = [i for i, e in enumerate(elements) if e.upper() == "CO"][0]
     co = coords[co_idx]
 
-    dists = []
-    for i in range(len(coords)):
-        if i == co_idx:
-            continue
-        d = np.linalg.norm(coords[i] - co)
-        dists.append((i, d))
+    dists = [(i, np.linalg.norm(coords[i] - co))
+             for i in range(len(coords)) if i != co_idx]
 
     dists.sort(key=lambda x: x[1])
 
     neighbors = [i for i, _ in dists[:6]]
-    return neighbors
+
+    return co_idx, neighbors
 
 
-def calc_bond_lengths(coords, co_idx, neighbors):
+def compute_geometry(elements, coords):
+
+    co_idx, neighbors = get_octahedral_neighbors(elements, coords)
     co = coords[co_idx]
-    return [np.linalg.norm(coords[i] - co) for i in neighbors]
 
+    # bond lengths
+    bond_lengths = [np.linalg.norm(coords[i] - co) for i in neighbors]
 
-def calc_angles(coords, co_idx, neighbors):
-    co = coords[co_idx]
-    angles = []
-
+    # angles
+    bond_angles = []
     for i, j in combinations(neighbors, 2):
-        v1 = coords[i] - co
-        v2 = coords[j] - co
+        bond_angles.append(calculate_angle(coords[i], co, coords[j]))
 
-        cosang = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-        ang = np.degrees(np.arccos(np.clip(cosang, -1, 1)))
+    bond_angles = bond_angles[:15]
 
-        angles.append(ang)
+    # sorting (CRITICAL for your model)
+    bond_lengths = sorted(bond_lengths)
+    bond_angles = sorted(bond_angles)
 
-    return angles[:15]
+    ideal_dev = ideal_geometry_deviation(bond_angles)
+
+    return bond_lengths, bond_angles, ideal_dev
