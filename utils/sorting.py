@@ -1,6 +1,3 @@
-def sort_features(bond_lengths, bond_angles):
+def sort_bl_angles(bl, angles):
 
-    bond_lengths = sorted(bond_lengths)
-    bond_angles = sorted(bond_angles)
-
-    return bond_lengths, bond_angles
+    return sorted(bl), sorted(angles)
