@@ -1,13 +1,12 @@
 import streamlit as st
-import numpy as np
 
 from core.xyz_parser import parse_xyz
 from core.geometry import compute_geometry
-from core.feature_builder import build_feature_vector
-from core.predictor import load_model, predict
+from core.feature_builder import build_features
+from core.predictor import predict
+from utils.sorting import sort_bl_angles
 
 st.set_page_config(layout="wide")
-
 st.title("Co–Octahedral SIM → D & E/D Predictor")
 
 uploaded_file = st.file_uploader("Upload XYZ file", type=["xyz"])
@@ -16,21 +15,20 @@ if uploaded_file:
 
     elements, coords = parse_xyz(uploaded_file)
 
-    d, A, ideal_dev = compute_geometry(elements, coords)
+    bl, angles, ideal_dev = compute_geometry(elements, coords)
 
-    features = build_feature_vector(d, A, ideal_dev)
+    bl, angles = sort_bl_angles(bl, angles)
 
-    st.write("### Sorted Bond Lengths")
-    st.write(np.round(d, 3))
+    features = build_features(bl, angles, ideal_dev)
 
-    st.write("### Sorted Bond Angles")
-    st.write(np.round(A, 2))
+    D, ED = predict(features)
 
-    st.write("Ideal deviation:", round(ideal_dev, 3))
+    st.subheader("Prediction")
 
-    model, model_type = load_model("model/model.pth")
+    st.success(f"D  = {D:.2f} cm⁻¹")
+    st.success(f"E/D = {ED:.3f}")
 
-    pred = predict(model, model_type, features)
-
-    st.success(f"D  = {pred[0][0]:.2f}")
-    st.success(f"E/D = {pred[0][1]:.3f}")
+    with st.expander("Show extracted geometry"):
+        st.write("Bond lengths:", bl)
+        st.write("Bond angles :", angles)
+        st.write("Ideal deviation:", ideal_dev)
