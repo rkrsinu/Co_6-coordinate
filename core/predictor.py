@@ -1,29 +1,15 @@
-import torch
-import pickle
+import joblib
 import numpy as np
 
-def load_model(path):
+# load once (fast for Streamlit)
+model_D  = joblib.load("model/RF_model_D.joblib")
+model_ED = joblib.load("model/RF_model_ED.joblib")
 
-    if path.endswith(".pth"):
-        model = torch.load(path, map_location="cpu")
-        model.eval()
-        return model, "torch"
-
-    if path.endswith(".pkl"):
-        with open(path, "rb") as f:
-            model = pickle.load(f)
-        return model, "sklearn"
-
-
-def predict(model, model_type, features):
+def predict(features: np.ndarray):
 
     features = features.reshape(1, -1)
 
-    if model_type == "torch":
-        with torch.no_grad():
-            pred = model(torch.tensor(features).float()).numpy()
+    D  = model_D.predict(features)[0]
+    ED = model_ED.predict(features)[0]
 
-    else:
-        pred = model.predict(features)
-
-    return pred
+    return D, ED
