@@ -6,6 +6,7 @@ from core.feature_builder import build_features
 from core.predictor import predict
 from utils.sorting import sort_bl_angles
 
+
 st.set_page_config(layout="wide")
 st.title("Co–Octahedral SIM → D & E/D Predictor")
 
@@ -13,22 +14,24 @@ uploaded_file = st.file_uploader("Upload XYZ file", type=["xyz"])
 
 if uploaded_file:
 
-    elements, coords = parse_xyz(uploaded_file)
+    try:
+        elements, coords = parse_xyz(uploaded_file)
 
-    bl, angles, ideal_dev = compute_geometry(elements, coords)
+        bl, angles, idev = compute_geometry(elements, coords)
 
-    bl, angles = sort_bl_angles(bl, angles)
+        bl, angles = sort_bl_angles(bl, angles)
 
-    features = build_features(bl, angles, ideal_dev)
+        features = build_features(bl, angles, idev)
 
-    D, ED = predict(features)
+        D, ED = predict(features)
 
-    st.subheader("Prediction")
+        st.success(f"D  = {D:.2f} cm⁻¹")
+        st.success(f"E/D = {ED:.3f}")
 
-    st.success(f"D  = {D:.2f} cm⁻¹")
-    st.success(f"E/D = {ED:.3f}")
+        with st.expander("Show extracted geometry"):
+            st.write("Bond lengths:", bl)
+            st.write("Bond angles :", angles)
+            st.write("Ideal deviation:", idev)
 
-    with st.expander("Show extracted geometry"):
-        st.write("Bond lengths:", bl)
-        st.write("Bond angles :", angles)
-        st.write("Ideal deviation:", ideal_dev)
+    except Exception as e:
+        st.error(f"Error: {e}")
