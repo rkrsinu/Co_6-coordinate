@@ -1,11 +1,10 @@
 import numpy as np
 
-def build_features(bond_lengths, bond_angles, ideal_dev):
+def build_features(bl, angles, ideal_dev):
 
-    feature_vector = (
-        list(bond_lengths) +
-        list(bond_angles) +
-        [ideal_dev]
-    )
+    features = list(bl) + list(angles) + [ideal_dev]
 
-    return np.array(feature_vector, dtype=float)
+    if len(features) != 22:
+        raise ValueError("Feature vector must have 22 values.")
+
+    return np.array(features, dtype=float)
