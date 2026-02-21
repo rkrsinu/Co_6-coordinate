@@ -5,10 +5,9 @@ MIN_ANGLE = 60.0
 CO_H_CUTOFF = 1.8
 
 
-# ---------- helpers ----------
 def find_co_index(elements):
     for i, e in enumerate(elements):
-        if e.strip().lower().startswith("co"):
+        if e == "Co":
             return i
     return None
 
@@ -25,7 +24,6 @@ def ideal_dev(angles):
     return float(np.mean([min(abs(a - i) for i in ideal) for a in angles]))
 
 
-# ---------- robust octahedral neighbour finder ----------
 def get_valid_octahedral_neighbors(elements, coords, co_index):
 
     co_coord = coords[co_index]
@@ -39,11 +37,10 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
 
         d = np.linalg.norm(coords[i] - co_coord)
 
-        # ignore distant H
         if el == "H" and d >= CO_H_CUTOFF:
             continue
 
-        candidates.append((i, d, el))
+        candidates.append((i, d))
 
     candidates.sort(key=lambda x: x[1])
 
@@ -53,12 +50,12 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
     selected = [c[0] for c in candidates[:6]]
     pool = [c[0] for c in candidates[6:]]
 
-    # enforce octahedral angles
     while True:
 
         bad_pair = None
 
         for i, j in combinations(selected, 2):
+
             ang = calculate_angle(coords[i], co_coord, coords[j])
 
             if ang < MIN_ANGLE:
@@ -84,22 +81,20 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
     return selected
 
 
-# ---------- main geometry function ----------
 def compute_geometry(elements, coords):
 
     co_idx = find_co_index(elements)
 
     if co_idx is None:
-        raise ValueError("No cobalt (Co) atom found in XYZ file.")
+        raise ValueError("No cobalt (Co) atom found.")
 
     neighbors = get_valid_octahedral_neighbors(elements, coords, co_idx)
 
     if neighbors is None:
-        raise ValueError("Could not identify a valid octahedral coordination.")
+        raise ValueError("Valid octahedral coordination not found.")
 
     co_coord = coords[co_idx]
 
-    # ----- bond lengths + ligand types -----
     bond_data = sorted(
         [(np.linalg.norm(coords[i] - co_coord), elements[i]) for i in neighbors],
         key=lambda x: x[0]
@@ -108,14 +103,10 @@ def compute_geometry(elements, coords):
     bond_lengths = [x[0] for x in bond_data]
     ligand_types = [x[1] for x in bond_data]
 
-    # ----- bond angles -----
     angles = sorted([
         calculate_angle(coords[i], co_coord, coords[j])
         for i, j in combinations(neighbors, 2)
     ])
-
-    if len(angles) != 15:
-        raise ValueError("Could not compute 15 bond angles.")
 
     idev = ideal_dev(angles)
 
