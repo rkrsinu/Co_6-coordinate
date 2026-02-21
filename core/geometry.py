@@ -5,9 +5,10 @@ MIN_ANGLE = 60.0
 CO_H_CUTOFF = 1.8
 
 
+# ---------- helpers ----------
 def find_co_index(elements):
     for i, e in enumerate(elements):
-        if e == "Co":
+        if e.strip() == "Co":
             return i
     return None
 
@@ -24,10 +25,10 @@ def ideal_dev(angles):
     return float(np.mean([min(abs(a - i) for i in ideal) for a in angles]))
 
 
+# ---------- robust octahedral neighbour finder ----------
 def get_valid_octahedral_neighbors(elements, coords, co_index):
 
     co_coord = coords[co_index]
-
     candidates = []
 
     for i, el in enumerate(elements):
@@ -37,6 +38,7 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
 
         d = np.linalg.norm(coords[i] - co_coord)
 
+        # ignore distant H
         if el == "H" and d >= CO_H_CUTOFF:
             continue
 
@@ -50,6 +52,7 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
     selected = [c[0] for c in candidates[:6]]
     pool = [c[0] for c in candidates[6:]]
 
+    # enforce octahedral angles
     while True:
 
         bad_pair = None
@@ -81,6 +84,7 @@ def get_valid_octahedral_neighbors(elements, coords, co_index):
     return selected
 
 
+# ---------- MAIN FUNCTION ----------
 def compute_geometry(elements, coords):
 
     co_idx = find_co_index(elements)
@@ -95,19 +99,21 @@ def compute_geometry(elements, coords):
 
     co_coord = coords[co_idx]
 
-    bond_data = sorted(
-        [(np.linalg.norm(coords[i] - co_coord), elements[i]) for i in neighbors],
-        key=lambda x: x[0]
-    )
+    # ----- bond lengths (sorted) -----
+    bond_lengths = sorted([
+        np.linalg.norm(coords[i] - co_coord)
+        for i in neighbors
+    ])
 
-    bond_lengths = [x[0] for x in bond_data]
-    ligand_types = [x[1] for x in bond_data]
-
+    # ----- bond angles (sorted) -----
     angles = sorted([
         calculate_angle(coords[i], co_coord, coords[j])
         for i, j in combinations(neighbors, 2)
     ])
 
+    if len(angles) != 15:
+        raise ValueError("Could not compute 15 bond angles.")
+
     idev = ideal_dev(angles)
 
-    return bond_lengths, angles, idev, ligand_types
+    return bond_lengths, angles, idev
