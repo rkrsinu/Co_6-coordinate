@@ -1,3 +1,8 @@
+import sklearn
+import streamlit as st
+
+st.write("Scikit-learn version:", sklearn.__version__)
+
 import streamlit as st
 
 from core.xyz_parser import parse_xyz
