@@ -24,10 +24,18 @@ if uploaded_file:
 
             features = build_features(bl, angles, idev)
 
-            D, ED = predict(features)
+            D, D_std, ED, ED_std = predict(features)
 
-            st.success(f"D  = {D:.2f} cm⁻¹")
-            st.success(f"E/D = {ED:.3f}")
+            # 🔥 Minimum uncertainty threshold
+            D_unc = max(20, D_std)
+            ED_unc = max(0.05, ED_std)
+
+            st.success(f"D  = {D:.2f} ± {D_unc:.2f} cm⁻¹")
+            st.success(f"E/D = {ED:.3f} ± {ED_unc:.3f}")
+
+            # 🔥 warning for unreliable predictions
+            if D_std > 50:
+                st.warning("⚠️ High uncertainty: molecule may be outside training domain")
 
             with st.expander("Show extracted geometry"):
                 st.write("Bond lengths:", bl)
