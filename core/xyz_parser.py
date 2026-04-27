@@ -1,6 +1,5 @@
 import numpy as np
 
-# Full periodic table symbols
 PERIODIC_TABLE = {
     "H","He","Li","Be","B","C","N","O","F","Ne",
     "Na","Mg","Al","Si","P","S","Cl","Ar",
@@ -23,23 +22,16 @@ def parse_xyz(uploaded_file):
     for line in lines:
 
         parts = line.split()
-
         if len(parts) < 4:
             continue
 
-        atom = parts[0]
+        element = parts[0].capitalize()
 
-        # Normalize symbol
-        element = atom.capitalize()
-
-        # ✅ Allow all periodic elements
         if element not in PERIODIC_TABLE:
             raise ValueError(f"Unknown element '{element}'")
 
         try:
-            x = float(parts[1])
-            y = float(parts[2])
-            z = float(parts[3])
+            x, y, z = map(float, parts[1:4])
         except ValueError:
             continue
 
@@ -49,7 +41,6 @@ def parse_xyz(uploaded_file):
     if len(elements) == 0:
         raise ValueError("No valid atomic coordinates found.")
 
-    # 🔥 still enforce Co center (important for your model)
     if "Co" not in elements:
         raise ValueError("Only Co-containing complexes are supported.")
 
