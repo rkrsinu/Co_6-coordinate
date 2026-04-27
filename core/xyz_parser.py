@@ -1,24 +1,17 @@
 import numpy as np
 
-# Allowed elements for this app
-Z_TO_ELEMENT = {
-    1: "H",
-    6: "C",
-    7: "N",
-    8: "O",
-    9: "F",
-    14: "Si",   # NEW
-    15: "P",
-    16: "S",
-    17: "Cl",
-    27: "Co",
-    34: "Se",   # NEW
-    35: "Br",   # NEW
-    53: "I"     # NEW
+# Full periodic table symbols
+PERIODIC_TABLE = {
+    "H","He","Li","Be","B","C","N","O","F","Ne",
+    "Na","Mg","Al","Si","P","S","Cl","Ar",
+    "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn",
+    "Ga","Ge","As","Se","Br","Kr",
+    "Rb","Sr","Y","Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd",
+    "In","Sn","Sb","Te","I","Xe",
+    "Cs","Ba","La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu",
+    "Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg",
+    "Tl","Pb","Bi","Po","At","Rn"
 }
-
-ALLOWED_ELEMENTS = set(Z_TO_ELEMENT.values())
-
 
 def parse_xyz(uploaded_file):
 
@@ -36,24 +29,13 @@ def parse_xyz(uploaded_file):
 
         atom = parts[0]
 
-        # ---------- atomic number ----------
-        if atom.isdigit():
+        # Normalize symbol
+        element = atom.capitalize()
 
-            Z = int(atom)
+        # ✅ Allow all periodic elements
+        if element not in PERIODIC_TABLE:
+            raise ValueError(f"Unknown element '{element}'")
 
-            if Z not in Z_TO_ELEMENT:
-                raise ValueError(f"Atomic number {Z} is not supported in this app.")
-
-            element = Z_TO_ELEMENT[Z]
-
-        # ---------- element symbol ----------
-        else:
-            element = atom.capitalize()
-
-            if element not in ALLOWED_ELEMENTS:
-                raise ValueError(f"Element '{element}' is not supported in this app.")
-
-        # ---------- coordinates ----------
         try:
             x = float(parts[1])
             y = float(parts[2])
@@ -67,7 +49,7 @@ def parse_xyz(uploaded_file):
     if len(elements) == 0:
         raise ValueError("No valid atomic coordinates found.")
 
-    # ✅ enforce Co-only metal
+    # 🔥 still enforce Co center (important for your model)
     if "Co" not in elements:
         raise ValueError("Only Co-containing complexes are supported.")
 
