@@ -9,7 +9,6 @@ def build_features(bl, angles, ideal_dev):
     var_d = np.var(bl)
     var_A = np.var(angles)
 
-    # axial / equatorial split
     Req = np.mean(bl[:4])
     Rax = np.mean(bl[4:])
     Delta_R = Rax - Req
@@ -27,5 +26,4 @@ def build_features(bl, angles, ideal_dev):
     if len(features) != 28:
         raise ValueError(f"Feature vector must have 28 values. Got {len(features)}")
 
-    # 🔥 FIX: use float64 (not float32)
     return np.array(features, dtype=np.float64)
